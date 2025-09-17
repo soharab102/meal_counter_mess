@@ -1,0 +1,168 @@
+<!doctype html> <html lang="en"> <head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Mess Meal Cost Calculator</title>
+  <style>
+    body { font-family: Arial, sans-serif; background:#f6f7fb; margin:0; padding:20px; }
+    h1 { text-align:center; }
+    .card { background:#fff; padding:16px; margin-bottom:20px; border-radius:10px; box-shadow:0 4px 12px rgba(0,0,0,0.05); }
+    table { width:100%; border-collapse:collapse; margin-top:10px; }
+    th, td { border:1px solid #ddd; padding:8px; text-align:center; }
+    th { background:#f0f2f8; }
+    input { padding:6px; width:100%; box-sizing:border-box; border-radius:4px; border:1px solid #ccc; }
+    input:focus { border-color:#2b6ef6; outline:none; }
+    button { padding:8px 12px; background:#2b6ef6; color:#fff; border:none; border-radius:6px; cursor:pointer; }
+    button:hover { background:#1746a2; }
+    .row { display:flex; gap:10px; flex-wrap:wrap; margin-bottom:10px; }
+    .row > div { flex:1; min-width:120px; }
+    .reset-btn { background:#dc2626; }
+    .reset-btn:hover { background:#a11212; }
+    .section-title { background:#e2e8f0; padding:8px; margin-bottom:10px; font-weight:bold; border-radius:6px; }
+    #mealInputs tr:nth-child(odd) { background:#f9f9f9; }
+    #mealInputs tr:nth-child(even) { background:#e8f0fe; }
+    #sameMeal { background:#fff3cd; border-color:#ffecb5; }
+    #applySame { background:#ffc107; color:#000; }
+    #applySame:hover { background:#e0a800; }
+  </style>
+</head>
+<body>
+  <h1>Mess Meal Cost Calculator</h1>
+
+  <div class="card">
+    <h2>Shopping Records</h2>
+    <form id="shoppingForm">
+      <div class="row">
+        <div><input type="date" id="shopDate" required></div>
+        <div><input type="number" id="shopAmount" placeholder="Amount (Tk)" required></div>
+        <div><input type="text" id="shopNote" placeholder="Note (optional)"></div>
+        <div><button type="submit">Add Shopping</button></div>
+      </div>
+    </form>
+    <table id="shoppingTable">
+      <thead><tr><th>Date</th><th>Amount (Tk)</th><th>Note</th><th>Action</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <div class="section-title">Meal Records</div>
+    <form id="mealForm">
+      <div class="row">
+        <div><input type="date" id="mealDate" required></div>
+        <div><input type="number" id="sameMeal" placeholder="Same meal count for all"></div>
+        <div><button type="button" id="applySame">Apply Same</button></div>
+      </div>
+      <table>
+        <thead><tr><th>Person</th><th>Meals</th></tr></thead>
+        <tbody id="mealInputs">
+          <tr><td>Soharab</td><td><input type="number" min="0" id="Soharab"></td></tr>
+          <tr><td>Raian</td><td><input type="number" min="0" id="Raian"></td></tr>
+          <tr><td>Iqbal</td><td><input type="number" min="0" id="Iqbal"></td></tr>
+          <tr><td>Chinnmoy</td><td><input type="number" min="0" id="Chinnmoy"></td></tr>
+          <tr><td>Ridoy</td><td><input type="number" min="0" id="Ridoy"></td></tr>
+          <tr><td>Himel</td><td><input type="number" min="0" id="Himel"></td></tr>
+        </tbody>
+      </table>
+      <div style="margin-top:10px"><button type="submit">Add Meals</button></div>
+    </form>
+    <table id="mealTable">
+      <thead><tr><th>Date</th><th>Soharab</th><th>Raian</th><th>Iqbal</th><th>Chinnmoy</th><th>Ridoy</th><th>Himel</th><th>Action</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <h2>Calculation</h2>
+    <button id="calcBtn">Calculate Costs</button>
+    <button id="resetBtn" class="reset-btn">New Month (Clear All)</button>
+    <div id="results" style="margin-top:10px"></div>
+  </div>
+
+  <script>
+    let shopping = JSON.parse(localStorage.getItem('shopping') || '[]');
+    let meals = JSON.parse(localStorage.getItem('meals') || '[]');
+
+    const shoppingForm = document.getElementById('shoppingForm');
+    const shoppingTable = document.querySelector('#shoppingTable tbody');
+    const mealForm = document.getElementById('mealForm');
+    const mealTable = document.querySelector('#mealTable tbody');
+    const results = document.getElementById('results');
+    const resetBtn = document.getElementById('resetBtn');
+    const applySame = document.getElementById('applySame');
+
+    function renderShopping() {
+      shoppingTable.innerHTML = '';
+      shopping.forEach((s, i) => {
+        shoppingTable.innerHTML += `<tr><td>${s.date}</td><td>${s.amount}</td><td>${s.note}</td><td><button onclick="deleteShopping(${i})">Delete</button></td></tr>`;
+      });
+      localStorage.setItem('shopping', JSON.stringify(shopping));
+    }
+
+    function renderMeals() {
+      mealTable.innerHTML = '';
+      meals.forEach((m, i) => {
+        mealTable.innerHTML += `<tr><td>${m.date}</td><td>${m.Soharab}</td><td>${m.Raian}</td><td>${m.Iqbal}</td><td>${m.Chinnmoy}</td><td>${m.Ridoy}</td><td>${m.Himel}</td><td><button onclick="deleteMeal(${i})">Delete</button></td></tr>`;
+      });
+      localStorage.setItem('meals', JSON.stringify(meals));
+    }
+
+    shoppingForm.addEventListener('submit', e => {
+      e.preventDefault();
+      const s = { date: shopDate.value, amount: parseFloat(shopAmount.value), note: shopNote.value };
+      shopping.push(s);
+      renderShopping();
+      shoppingForm.reset();
+    });
+
+    mealForm.addEventListener('submit', e => {
+      e.preventDefault();
+      const m = { date: mealDate.value };
+      ['Soharab','Raian','Iqbal','Chinnmoy','Ridoy','Himel'].forEach(p => m[p] = parseInt(document.getElementById(p).value || 0));
+      meals.push(m);
+      renderMeals();
+      mealForm.reset();
+    });
+
+    applySame.addEventListener('click', () => {
+      const val = parseInt(document.getElementById('sameMeal').value);
+      if(!isNaN(val)){
+        ['Soharab','Raian','Iqbal','Chinnmoy','Ridoy','Himel'].forEach(p => document.getElementById(p).value = val);
+      }
+    });
+
+    function deleteShopping(i){ shopping.splice(i,1); renderShopping(); }
+    function deleteMeal(i){ meals.splice(i,1); renderMeals(); }
+
+    document.getElementById('calcBtn').addEventListener('click', () => {
+      const totalCost = shopping.reduce((a,b)=>a+b.amount,0);
+      const totals = {Soharab:0, Raian:0, Iqbal:0, Chinnmoy:0, Ridoy:0, Himel:0};
+      meals.forEach(m => { for(let p in totals){ totals[p]+=m[p]; } });
+      const totalMeals = Object.values(totals).reduce((a,b)=>a+b,0);
+      const rate = totalMeals ? (totalCost / totalMeals) : 0;
+      let html = `<p><b>Total Cost:</b> ${totalCost.toFixed(2)} Tk</p>`;
+      html += `<p><b>Total Meals:</b> ${totalMeals}</p>`;
+      html += `<p><b>Meal Rate:</b> ${rate.toFixed(2)} Tk/meal</p>`;
+      html += '<table><tr><th>Person</th><th>Total Meals</th><th>Cost (Tk)</th></tr>';
+      for(let p in totals){
+        html += `<tr><td>${p}</td><td>${totals[p]}</td><td>${(totals[p]*rate).toFixed(2)}</td></tr>`;
+      }
+      html += '</table>';
+      results.innerHTML = html;
+    });
+
+    resetBtn.addEventListener('click', () => {
+      if(confirm('Are you sure you want to clear all data for a new month?')){
+        shopping = [];
+        meals = [];
+        renderShopping();
+        renderMeals();
+        results.innerHTML = '';
+        localStorage.clear();
+      }
+    });
+
+    renderShopping();
+    renderMeals();
+  </script>
+</body>
+</html>
