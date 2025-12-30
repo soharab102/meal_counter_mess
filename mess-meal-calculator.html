@@ -1,0 +1,226 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mess Meal Cost Calculator</title>
+
+<style>
+body { font-family: Arial; background:#f6f7fb; padding:20px; }
+h1 { text-align:center; }
+.card { background:#fff; padding:16px; margin-bottom:20px; border-radius:10px; }
+table { width:100%; border-collapse:collapse; margin-top:10px; }
+th, td { border:1px solid #ccc; padding:8px; text-align:center; }
+th { background:#eee; }
+input, button { padding:6px; }
+button { background:#2563eb; color:white; border:none; border-radius:6px; cursor:pointer; }
+button:hover { background:#1e40af; }
+.reset { background:#dc2626; }
+.reset:hover { background:#991b1b; }
+.row { display:flex; gap:10px; flex-wrap:wrap; }
+</style>
+</head>
+
+<body>
+
+<h1>Mess Meal Cost Calculator</h1>
+
+<!-- SETUP -->
+<div class="card" id="setupCard">
+  <h2>Mess Setup</h2>
+  <input type="number" id="totalMembers" placeholder="Total Members">
+  <button onclick="createMemberInputs()">Next</button>
+  <div id="memberInputs"></div>
+</div>
+
+<!-- MAIN -->
+<div id="mainApp" style="display:none;">
+
+<!-- SHOPPING -->
+<div class="card">
+<h2>Shopping</h2>
+<form id="shoppingForm">
+<div class="row">
+<input type="date" id="shopDate" required>
+<input type="number" id="shopAmount" placeholder="Amount" required>
+<input type="text" id="shopNote" placeholder="Note">
+<button>Add</button>
+</div>
+</form>
+
+<table>
+<thead><tr><th>Date</th><th>Amount</th><th>Note</th></tr></thead>
+<tbody id="shoppingTable"></tbody>
+</table>
+</div>
+
+<!-- MEALS -->
+<div class="card">
+<h2>Meals</h2>
+<form id="mealForm">
+<input type="date" id="mealDate" required>
+<table>
+<thead><tr><th>Member</th><th>Meals</th></tr></thead>
+<tbody id="mealInputs"></tbody>
+</table>
+<button>Add Meals</button>
+</form>
+
+<table>
+<thead id="mealHead"></thead>
+<tbody id="mealTable"></tbody>
+</table>
+</div>
+
+<!-- CALCULATION -->
+<div class="card">
+<h2>Calculation</h2>
+<button onclick="calculate()">Calculate</button>
+<button class="reset" onclick="resetAll()">New Month</button>
+<div id="results"></div>
+</div>
+
+</div>
+
+<script>
+let members = JSON.parse(localStorage.getItem("members")) || [];
+let shopping = JSON.parse(localStorage.getItem("shopping")) || [];
+let meals = JSON.parse(localStorage.getItem("meals")) || [];
+
+/* SETUP */
+function createMemberInputs(){
+  let n = +totalMembers.value;
+  if(n < 1) return alert("Enter valid number");
+  memberInputs.innerHTML = "";
+  for(let i=0;i<n;i++){
+    memberInputs.innerHTML += `<input placeholder="Member ${i+1} name"><br><br>`;
+  }
+  memberInputs.innerHTML += `<button onclick="saveMembers()">Start</button>`;
+}
+
+function saveMembers(){
+  members = [];
+  document.querySelectorAll("#memberInputs input").forEach(i=>{
+    if(i.value.trim()) members.push(i.value.trim());
+  });
+  if(!members.length) return alert("Enter names");
+  localStorage.setItem("members",JSON.stringify(members));
+  setupCard.style.display="none";
+  mainApp.style.display="block";
+  renderMealInputs();
+  renderMealTable();
+}
+
+/* MEAL INPUT */
+function renderMealInputs(){
+  mealInputs.innerHTML="";
+  members.forEach((m,i)=>{
+    mealInputs.innerHTML += `
+      <tr>
+        <td>${m}</td>
+        <td><input type="number" min="0" id="meal_${i}"></td>
+      </tr>`;
+  });
+}
+
+/* SHOPPING */
+shoppingForm.onsubmit = e=>{
+  e.preventDefault();
+  shopping.push({
+    date: shopDate.value,
+    amount: Number(shopAmount.value),
+    note: shopNote.value
+  });
+  localStorage.setItem("shopping",JSON.stringify(shopping));
+  renderShopping();
+  shoppingForm.reset();
+};
+
+function renderShopping(){
+  shoppingTable.innerHTML="";
+  shopping.forEach(s=>{
+    shoppingTable.innerHTML += `
+      <tr><td>${s.date}</td><td>${s.amount}</td><td>${s.note}</td></tr>`;
+  });
+}
+
+/* MEALS SAVE */
+mealForm.onsubmit = e=>{
+  e.preventDefault();
+  let mealArr = [];
+  members.forEach((_,i)=>{
+    mealArr.push(Number(document.getElementById(`meal_${i}`).value || 0));
+  });
+  meals.push({ date: mealDate.value, meals: mealArr });
+  localStorage.setItem("meals",JSON.stringify(meals));
+  renderMealTable();
+  mealForm.reset();
+};
+
+function renderMealTable(){
+  mealHead.innerHTML = "<tr><th>Date</th>" +
+    members.map(m=>`<th>${m}</th>`).join("") +
+    "</tr>";
+
+  mealTable.innerHTML="";
+  meals.forEach(m=>{
+    let row = `<tr><td>${m.date}</td>`;
+    m.meals.forEach(v=> row += `<td>${v}</td>`);
+    row += "</tr>";
+    mealTable.innerHTML += row;
+  });
+}
+
+/* CALCULATION (FIXED) */
+function calculate(){
+  let totalCost = shopping.reduce((s,v)=>s+v.amount,0);
+
+  let totalMealsPerPerson = new Array(members.length).fill(0);
+  meals.forEach(m=>{
+    m.meals.forEach((v,i)=> totalMealsPerPerson[i]+=v);
+  });
+
+  let totalMeals = totalMealsPerPerson.reduce((a,b)=>a+b,0);
+  let rate = totalMeals ? totalCost / totalMeals : 0;
+
+  let html = `
+    <p><b>Total Cost:</b> ${totalCost.toFixed(2)} Tk</p>
+    <p><b>Total Meals:</b> ${totalMeals}</p>
+    <p><b>Meal Rate:</b> ${rate.toFixed(2)} Tk</p>
+    <table>
+      <tr><th>Member</th><th>Meals</th><th>Cost</th></tr>`;
+
+  members.forEach((m,i)=>{
+    html += `
+      <tr>
+        <td>${m}</td>
+        <td>${totalMealsPerPerson[i]}</td>
+        <td>${(totalMealsPerPerson[i]*rate).toFixed(2)}</td>
+      </tr>`;
+  });
+
+  html += "</table>";
+  results.innerHTML = html;
+}
+
+/* RESET */
+function resetAll(){
+  if(confirm("Clear all data?")){
+    localStorage.clear();
+    location.reload();
+  }
+}
+
+/* AUTO LOAD */
+if(members.length){
+  setupCard.style.display="none";
+  mainApp.style.display="block";
+  renderMealInputs();
+  renderMealTable();
+}
+renderShopping();
+</script>
+
+</body>
+</html>
+
