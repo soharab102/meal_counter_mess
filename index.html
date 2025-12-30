@@ -184,19 +184,50 @@ function renderMeals(){
   });
 }
 
-calcBtn.onclick=()=>{
-  const totalCost=shopping.reduce((a,b)=>a+b.amount,0);
-  let totals=new Array(members.length).fill(0);
-  meals.forEach(m=>{for(let i in m.data) totals[i]+=m.data[i];});
-  const totalMeals=totals.reduce((a,b)=>a+b,0);
-  const rate=totalMeals?totalCost/totalMeals:0;
-  let html=`<p>Total Cost: ${totalCost.toFixed(2)} Tk</p>`;
-  html+=`<p>Meal Rate: ${rate.toFixed(2)}</p>`;
-  html+='<table><tr><th>Member</th><th>Meals</th><th>Cost</th></tr>';
-  members.forEach((m,i)=>html+=`<tr><td>${m}</td><td>${totals[i]}</td><td>${(totals[i]*rate).toFixed(2)}</td></tr>`);
-  html+='</table>';
-  results.innerHTML=html;
+calcBtn.onclick = () => {
+  let totalCost = 0;
+  shopping.forEach(s => {
+    totalCost += Number(s.amount);
+  });
+
+  // Total meals per member
+  let totals = new Array(members.length).fill(0);
+
+  meals.forEach(m => {
+    members.forEach((_, i) => {
+      totals[i] += Number(m.data[i] || 0);
+    });
+  });
+
+  const totalMeals = totals.reduce((a, b) => a + b, 0);
+  const rate = totalMeals > 0 ? totalCost / totalMeals : 0;
+
+  let html = `
+    <p><b>Total Cost:</b> ${totalCost.toFixed(2)} Tk</p>
+    <p><b>Total Meals:</b> ${totalMeals}</p>
+    <p><b>Meal Rate:</b> ${rate.toFixed(2)} Tk / meal</p>
+    <table>
+      <tr>
+        <th>Member</th>
+        <th>Total Meals</th>
+        <th>Cost (Tk)</th>
+      </tr>
+  `;
+
+  members.forEach((m, i) => {
+    html += `
+      <tr>
+        <td>${m}</td>
+        <td>${totals[i]}</td>
+        <td>${(totals[i] * rate).toFixed(2)}</td>
+      </tr>
+    `;
+  });
+
+  html += `</table>`;
+  results.innerHTML = html;
 };
+
 
 resetBtn.onclick=()=>{
   if(confirm("Clear all data?")){
