@@ -26,7 +26,7 @@ button:hover { background:#1746a2; }
 
 <h1>Mess Meal Cost Calculator</h1>
 
-<!-- SETUP SCREEN -->
+<!-- SETUP -->
 <div class="card" id="setupCard">
   <h2>Mess Setup</h2>
   <div class="row">
@@ -51,7 +51,9 @@ button:hover { background:#1746a2; }
   </div>
 </form>
 <table id="shoppingTable">
-<thead><tr><th>Date</th><th>Amount</th><th>Note</th><th>Action</th></tr></thead>
+<thead>
+<tr><th>Date</th><th>Amount</th><th>Note</th><th>Action</th></tr>
+</thead>
 <tbody></tbody>
 </table>
 </div>
@@ -81,7 +83,7 @@ button:hover { background:#1746a2; }
 <h2>Calculation</h2>
 <button id="calcBtn">Calculate</button>
 <button id="resetBtn" class="reset-btn">New Month</button>
-<div id="results"></div>
+<div id="results" style="margin-top:10px"></div>
 </div>
 
 </div>
@@ -96,33 +98,41 @@ const mealInputs = document.getElementById('mealInputs');
 const mealTable = document.querySelector('#mealTable tbody');
 const results = document.getElementById('results');
 
+/* SETUP */
 function createMemberInputs(){
-  const total = +totalMembers.value;
-  if(!total) return alert("Enter total members");
-  memberInputs.innerHTML = '';
+  const total = Number(totalMembers.value);
+  if(!total || total < 1){
+    alert("Enter valid total members");
+    return;
+  }
+  memberInputs.innerHTML='';
   for(let i=0;i<total;i++){
     memberInputs.innerHTML += `<input placeholder="Member ${i+1} name" style="margin-bottom:6px">`;
   }
-  memberInputs.innerHTML += `<button onclick="saveMembers()">Start</button>`;
+  memberInputs.innerHTML += `<button onclick="saveMembers()">Start App</button>`;
 }
 
 function saveMembers(){
-  members = [];
+  members=[];
   document.querySelectorAll('#memberInputs input').forEach(i=>{
     if(i.value.trim()) members.push(i.value.trim());
   });
-  if(!members.length) return alert("Enter names");
-  localStorage.setItem('members', JSON.stringify(members));
+  if(!members.length){
+    alert("Enter member names");
+    return;
+  }
+  localStorage.setItem('members',JSON.stringify(members));
   setupCard.style.display='none';
   mainApp.style.display='block';
   renderMealInputs();
   renderMealHeader();
 }
 
+/* MEALS INPUT */
 function renderMealInputs(){
   mealInputs.innerHTML='';
   members.forEach((m,i)=>{
-    mealInputs.innerHTML += `
+    mealInputs.innerHTML+=`
       <tr>
         <td>${m} <button onclick="editName(${i})">✏️</button></td>
         <td><input type="number" min="0" id="meal_${i}"></td>
@@ -131,41 +141,65 @@ function renderMealInputs(){
 }
 
 function editName(i){
-  const n = prompt("Edit name", members[i]);
+  const n=prompt("Edit name",members[i]);
   if(n){
     members[i]=n;
-    localStorage.setItem('members', JSON.stringify(members));
+    localStorage.setItem('members',JSON.stringify(members));
     renderMealInputs();
     renderMealHeader();
     renderMeals();
   }
 }
 
-shoppingForm.onsubmit = e=>{
+/* SHOPPING */
+shoppingForm.onsubmit=e=>{
   e.preventDefault();
-  shopping.push({date:shopDate.value, amount:+shopAmount.value, note:shopNote.value});
+  shopping.push({
+    date:shopDate.value,
+    amount:Number(shopAmount.value),
+    note:shopNote.value
+  });
   localStorage.setItem('shopping',JSON.stringify(shopping));
   renderShopping();
   shoppingForm.reset();
 };
 
-mealForm.onsubmit = e=>{
+function renderShopping(){
+  shoppingTable.innerHTML='';
+  shopping.forEach((s,i)=>{
+    shoppingTable.innerHTML+=`
+      <tr>
+        <td>${s.date}</td>
+        <td>${s.amount}</td>
+        <td>${s.note}</td>
+        <td><button onclick="shopping.splice(${i},1);renderShopping()">Del</button></td>
+      </tr>`;
+  });
+}
+
+/* MEAL SUBMIT (FIXED) */
+mealForm.onsubmit=e=>{
   e.preventDefault();
+
+  let hasMeal=false;
   let m={date:mealDate.value,data:{}};
-  members.forEach((_,i)=>m.data[i]=+document.getElementById(`meal_${i}`).value||0);
+
+  members.forEach((_,i)=>{
+    const v=Number(document.getElementById(`meal_${i}`).value||0);
+    if(v>0) hasMeal=true;
+    m.data[i]=v;
+  });
+
+  if(!hasMeal){
+    alert("Enter meals before adding!");
+    return;
+  }
+
   meals.push(m);
   localStorage.setItem('meals',JSON.stringify(meals));
   renderMeals();
   mealForm.reset();
 };
-
-function renderShopping(){
-  shoppingTable.innerHTML='';
-  shopping.forEach((s,i)=>{
-    shoppingTable.innerHTML+=`<tr><td>${s.date}</td><td>${s.amount}</td><td>${s.note}</td>
-    <td><button onclick="shopping.splice(${i},1);renderShopping()">Del</button></td></tr>`;
-  });
-}
 
 function renderMealHeader(){
   let h='<tr><th>Date</th>';
@@ -184,58 +218,45 @@ function renderMeals(){
   });
 }
 
-calcBtn.onclick = () => {
-  let totalCost = 0;
-  shopping.forEach(s => {
-    totalCost += Number(s.amount);
-  });
+/* CALCULATION (FIXED) */
+calcBtn.onclick=()=>{
+  let totalCost=0;
+  shopping.forEach(s=>totalCost+=Number(s.amount));
 
-  // Total meals per member
-  let totals = new Array(members.length).fill(0);
-
-  meals.forEach(m => {
-    members.forEach((_, i) => {
-      totals[i] += Number(m.data[i] || 0);
+  let totals=new Array(members.length).fill(0);
+  meals.forEach(m=>{
+    members.forEach((_,i)=>{
+      totals[i]+=Number(m.data[i]||0);
     });
   });
 
-  const totalMeals = totals.reduce((a, b) => a + b, 0);
-  const rate = totalMeals > 0 ? totalCost / totalMeals : 0;
+  const totalMeals=totals.reduce((a,b)=>a+b,0);
+  const rate=totalMeals?totalCost/totalMeals:0;
 
-  let html = `
+  let html=`
     <p><b>Total Cost:</b> ${totalCost.toFixed(2)} Tk</p>
     <p><b>Total Meals:</b> ${totalMeals}</p>
     <p><b>Meal Rate:</b> ${rate.toFixed(2)} Tk / meal</p>
     <table>
-      <tr>
-        <th>Member</th>
-        <th>Total Meals</th>
-        <th>Cost (Tk)</th>
-      </tr>
-  `;
+      <tr><th>Member</th><th>Total Meals</th><th>Cost (Tk)</th></tr>`;
 
-  members.forEach((m, i) => {
-    html += `
-      <tr>
-        <td>${m}</td>
-        <td>${totals[i]}</td>
-        <td>${(totals[i] * rate).toFixed(2)}</td>
-      </tr>
-    `;
+  members.forEach((m,i)=>{
+    html+=`<tr><td>${m}</td><td>${totals[i]}</td><td>${(totals[i]*rate).toFixed(2)}</td></tr>`;
   });
 
-  html += `</table>`;
-  results.innerHTML = html;
+  html+='</table>';
+  results.innerHTML=html;
 };
 
-
+/* RESET */
 resetBtn.onclick=()=>{
-  if(confirm("Clear all data?")){
+  if(confirm("Clear all data for new month?")){
     localStorage.clear();
     location.reload();
   }
 };
 
+/* AUTO LOAD */
 if(members.length){
   setupCard.style.display='none';
   mainApp.style.display='block';
