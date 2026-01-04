@@ -1,0 +1,16 @@
+
+
+I wanted to focus on logic, problem-solving, and DOM manipulation instead of tools and frameworks. This helped me understand how real calculations work internally.
+
+
+🔧 Planned Improvements
+
+Month-wise data storage
+
+Deposit & balance tracking
+
+Export monthly report (PDF)
+
+Mobile-responsive UI
+
+React / backend version
