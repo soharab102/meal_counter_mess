@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>মেস ম্যানেজমেন্ট সিস্টেম</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🍽️ মেস ম্যানেজমেন্ট সিস্টেম</h1>
+            <p class="subtitle">শপিং লিস্ট, মিল কাউন্ট ও খরচ হিসাব</p>
+        </header>
+
+        <!-- মেম্বার সেকশন -->
+        <section class="section">
+            <h2>👥 মেসের মেম্বারগণ</h2>
+            <div class="controls">
+                <div class="input-group">
+                    <input type="number" id="memberCount" placeholder="মেম্বার সংখ্যা" min="1">
+                    <button onclick="addMembers()" class="btn-primary">মেম্বার যোগ করুন</button>
+                </div>
+                <button onclick="addSingleMember()" class="btn-secondary">➕ নতুন মেম্বার</button>
+            </div>
+            <div id="membersList" class="members-grid"></div>
+        </section>
+
+        <!-- শপিং লিস্ট -->
+        <section class="section shopping-section">
+            <h2>🛒 শপিং লিস্ট</h2>
+            <div class="shopping-control">
+                <div class="input-group">
+                    <input type="text" id="itemName" placeholder="আইটেমের নাম">
+                    <input type="number" id="itemQuantity" placeholder="পরিমাণ" min="1">
+                    <input type="number" id="itemPrice" placeholder="দাম (প্রতি ইউনিট)" min="0" step="0.01">
+                    <button onclick="addShoppingItem()" class="btn-primary">আইটেম যোগ করুন</button>
+                </div>
+            </div>
+            <div id="shoppingList" class="shopping-list"></div>
+            <div class="shopping-total">
+                <h3>মোট শপিং খরচ: ৳<span id="shoppingTotal">0.00</span></h3>
+            </div>
+        </section>
+
+        <!-- ডেইলি মিল সেটআপ -->
+        <section class="section">
+            <h2>📅 দৈনিক মিল কাউন্ট</h2>
+            <div class="daily-setup">
+                <div class="input-group">
+                    <input type="date" id="mealDate" value="">
+                    <button onclick="setupDailyMeals()" class="btn-primary">মিল সেটআপ করুন</button>
+                </div>
+                <p class="hint">* প্রতিদিন আলাদা করে প্রতিটি মেম্বারের মিল কাউন্ট সেট করুন</p>
+            </div>
+            <div id="dailyMealsContainer"></div>
+        </section>
+
+        <!-- মেম্বারওয়াইস মিল কাউন্ট সারাংশ -->
+        <section class="section">
+            <h2>📊 মেম্বারওয়াইস মিল কাউন্ট</h2>
+            <div class="filter-controls">
+                <label>তারিখ: 
+                    <input type="date" id="summaryFilterDate" onchange="updateMemberWiseSummary()">
+                </label>
+                <button onclick="updateMemberWiseSummary()" class="btn-secondary">আপডেট</button>
+                <button onclick="clearSummaryFilter()" class="btn-secondary">সব দেখুন</button>
+            </div>
+            <div id="memberWiseSummary"></div>
+        </section>
+
+        <!-- মিল রেকর্ড -->
+        <section class="section">
+            <h2>📋 মিল রেকর্ড</h2>
+            <div class="filter-controls">
+                <input type="date" id="filterDate" onchange="filterMeals()">
+                <button onclick="showAllMeals()" class="btn-secondary">সব দেখুন</button>
+            </div>
+            <div id="mealsRecord"></div>
+        </section>
+
+        <!-- কস্ট ক্যালকুলেশন -->
+        <section class="section summary-section">
+            <h2>💰 খরচ ক্যালকুলেশন</h2>
+            <div class="cost-controls">
+                <div class="input-group">
+                    <input type="number" id="totalCost" placeholder="মোট খরচ (টাকা)" step="0.01">
+                    <button onclick="calculateCost()" class="btn-primary">ক্যালকুলেট করুন</button>
+                </div>
+                <p class="hint">* শপিং লিস্টের মোট খরচ অটো আসবে, কিন্তু আপনি ম্যানুয়ালিও দিতে পারেন</p>
+            </div>
+            <div id="costSummary"></div>
+        </section>
+
+        <!-- রিপোর্ট -->
+        <section class="section">
+            <h2>📄 রিপোর্ট</h2>
+            <div class="report-buttons">
+                <button onclick="generateDailyReport()" class="btn-primary">দৈনিক রিপোর্ট</button>
+                <button onclick="generateMonthlyReport()" class="btn-secondary">মাসিক রিপোর্ট</button>
+                <button onclick="generateMemberReport()" class="btn-secondary">মেম্বার রিপোর্ট</button>
+                <button onclick="exportData()" class="btn-secondary">💾 ডেটা এক্সপোর্ট</button>
+                <button onclick="clearData()" class="btn-danger">🗑️ সব ডেটা মুছুন</button>
+            </div>
+            <div id="reportContainer"></div>
+        </section>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
